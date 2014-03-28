@@ -3,7 +3,7 @@
 	*	bdModelDB 
 	*	@author 	Barry Dam
 	*	@copyright  BIC Multimedia 2013 - 2014
-	*	@version	1.1.1
+	*	@version	1.1.2
 	*	@uses		\LW\DB
 	*
 	*	Note:
@@ -80,6 +80,9 @@
 						)
 					;
 
+		/* Singletons for performance */
+			public static $arrSingletons = array(); // key = primarykey , value = object		 
+					
 		/* abstracts */
 
 			/**
@@ -241,8 +244,7 @@
 			 */
 			final public static function fetchAll()
 			{
-				$strCalledClassName = get_called_class();
-				$objChildTemp		= new $strCalledClassName();
+				$objChildTemp		= new static;
 				$strTableName 		= $objChildTemp->getTableName();
 				if (! $strTableName) {
 					$arrBacktrace = debug_backtrace();
@@ -337,7 +339,7 @@
 			/**
 			 * Constructor called from static function 
 			 */
-			final protected function construct($getIntIDorDbArray = false)
+			final private function construct($getIntIDorDbArray = false)
 			{
 				/* Regular consturctor using intID */
 					if (is_numeric($getIntIDorDbArray))
@@ -349,7 +351,7 @@
 					if (! $this->arrModelDBdata) throw new Exception("Empty object", 1);					
 				/**/
 			}
-			final protected function construct_byPrimaryKey($getIntID = false)
+			final private function construct_byPrimaryKey($getIntID = false)
 			{
 				if (! $getIntID) return false ;
 				$strTableName = $this->getTableName();
@@ -368,7 +370,7 @@
 			/**
 			 * Only be called once! 
 			 */
-			final protected function construct_setDbData($getArrDbData = false)
+			final private function construct_setDbData($getArrDbData = false)
 			{
 				if (! $getArrDbData || $this->arrModelDBdata) return false ;
 				foreach ($getArrDbData as $key => $val) {
@@ -380,12 +382,23 @@
 				}				
 			}
 			private static function construct_fromChildObject($getIntOrDbRow){
+				$calledClass = get_called_class();
+				/* Check for singletons */				
+				if (
+					is_numeric($getIntOrDbRow) 
+					&& array_key_exists($calledClass, self::$arrSingletons)
+					&& array_key_exists($getIntOrDbRow, self::$arrSingletons[$calledClass])
+				)
+					return self::$arrSingletons[$calledClass][$getIntOrDbRow];
+				/* else create a new one */	
 				$objChild 			= new static;
 				try { 
 					$objChild->construct($getIntOrDbRow);
 				} catch(Exception $e) {
 					$objChild = null;
 				}
+				/* add to singletons */
+				if (is_numeric($getIntOrDbRow)) self::$arrSingletons[$calledClass][$getIntOrDbRow] = $objChild;
 				return $objChild;
 			}
 
