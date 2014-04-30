@@ -22,9 +22,7 @@ class modelExample extends bdModelDB {
 	}
 	
 	public function yourNewFunction(){
-		if($something==$wrong){
-			self::triggerError('There is something wrong!');
-		}
+		/* Do your own shizzle here */
 		
 	}
 }
