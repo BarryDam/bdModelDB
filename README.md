@@ -6,13 +6,14 @@
 ##Extending this class##
 ```php
 class modelExample extends bdModelDB {
-	public function getTableName(){
-		return 'table_name';
-	}
-	public static function insert(){
-		// run mysql with ur data then return
-		
-	}
+	/* Abstracts from bdModelDB */
+		public function getTableName(){
+			return 'table_name';
+		}
+		public static function insert(){
+			// run mysql with ur data then return
+			// then return a self::fetchByPrimaryKey(MYSQL_INSERT_ID);
+		}
 	
 	
 	
