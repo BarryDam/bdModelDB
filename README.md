@@ -15,8 +15,7 @@ class modelExample extends bdModelDB {
 			// then return a self::fetchByPrimaryKey(MYSQL_INSERT_ID);
 		}
 	
-	
-	
+		
 	public function __set($getName,$getVal){
 		if($getName=="something") $dosome;
 		parent::__set($getName,$getVal);
@@ -30,17 +29,18 @@ class modelExample extends bdModelDB {
 ```
 
 ##Using this class##
-- Create one object by calling it's ID
+- Get one object by calling it's ID
 ```php
-$objExample = modelExample::fetchByID(1); || getByPrimaryKey # returns modelExample object
+$objExample = modelExample::fetchByID(1); # || getByPrimaryKey # returns modelExample object
 ```
 
-- Create multiple objects by get them all from DB
+- Get multiple objects in an array
+( more functions are available example: fetchByColumn(), fetchByWhere(), etc >> check the commments in bdModelDB.php)
 ```php
 $arrExampleObjects = modelExample::fetchAll(); #returns array(modelExample object,modelExample object,modelExample object,...)
 ```
 
-	- Get the vars (equal to db column names)
+- This is how you can get the db colum values
 ```php
 $objExample->intID 				# inside the class use $this->intID
 $objExample->strName 
@@ -56,6 +56,17 @@ $objExample->strName = 'new value';
 ```php
 $objExample->update(); # return (boolean) on success
 ```
+
+- Delete the database
+```php
+$objExample->delete(); # return (boolean) on success
+```
+
+- Duplicate the database
+```php
+	$objNew = $objExample->duplicate();
+```
+
 - getter functions
 ```php
 $objExample->getTableName(); #the db table name
