@@ -3,7 +3,7 @@
 	*	bdModelDB 
 	*	@author 	Barry Dam
 	*	@copyright  BIC Multimedia 2013 - 2014
-	*	@version	1.1.2
+	*	@version	1.1.3
 	*	@uses		\LW\DB
 	*
 	*	Note:
@@ -76,7 +76,7 @@
 					$arrModelDBCalledFN		= array(), # array to check if a function is allready called
 					$arrModelDBSettings 	= array(
 						'strTableName'			=> false,
-						'strColumnPrimaryKey' 	=> 'intID' 	#default BIC 
+						'strColumnPrimaryKey' 	=> 'intID'  #default BIC //TODO SHOW KEYS FROM tblPAG__Textbins WHERE Key_name = 'PRIMARY'
 						)
 					;
 
@@ -217,6 +217,24 @@
 					$this->getConfigPrimaryKey().' = ?',
 					$this->arrModelDBdata[$this->getConfigPrimaryKey()]
 				);				
+			}
+
+			/**
+			 * Duplicates the current model in DB
+			 * @return child object of bdModelDB - new db entry
+			 */
+			public function duplicate()
+			{
+				// create the new db array
+				$arrNewDBEntry = array();
+				foreach ($this->arrModelDBColumns as $strColumn)
+					if ($strColumn != $this->getConfigPrimaryKey())
+						$arrNewDBEntry[$strColumn] = $this->$strColumn;
+				// insert in db
+				if (! count($arrNewDBEntry)) return;
+				$query = \LW\DB::insert($this->getTableName(), $arrNewDBEntry);
+				if (! $query) return;
+				return static::fetchByPrimaryKey(\LW\DB::getInsertId());
 			}
 
 		/* Static create / fetch functions */
