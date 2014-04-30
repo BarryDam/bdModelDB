@@ -31,7 +31,7 @@ class modelExample extends bdModelDB {
 ##Using this class##
 - Get one object by calling it's ID
 ```php
-$objExample = modelExample::fetchByID(1); # || getByPrimaryKey # returns modelExample object
+$objExample = modelExample::fetchByID(1); # || fetchByPrimaryKey # returns modelExample object
 ```
 
 - Get multiple objects in an array
