@@ -256,13 +256,14 @@
 				return self::fetchByPrimaryKey($getIntID);
 			}
 
-			
 			/**
-			 * @return (array) with (DB) objects 
+			 * @param  string  $getOrderByColumn   Optional
+			 * @param  string  $getOrderDirection  Only used when $getOrderByColumn is set.
+			 * @return [type]  array               array with bdModelDB childobjects
 			 */
-			final public static function fetchAll()
+			final public static function fetchAll($getOrderByColumn = false, $getOrderDirection = "ASC")
 			{
-				$objChildTemp		= new static;
+				$objChildTemp		= new static();
 				$strTableName 		= $objChildTemp->getTableName();
 				if (! $strTableName) {
 					$arrBacktrace = debug_backtrace();
@@ -272,7 +273,12 @@
 					);
 					return false ;
 				}
-				$rows = \LW\DB::select($strTableName,'*');
+				if ($getOrderByColumn) {
+					// 1 = 1 (needed)
+					$rows = \LW\DB::select($strTableName, '*', '1=1 ORDER BY '.$getOrderByColumn.' '.$getOrderDirection);	
+				} else {
+					$rows = \LW\DB::select($strTableName, '*');	
+				}				
 				if (! $rows) return false ;
 				$arrObjects	= array();
 				foreach ($rows as $row) {
