@@ -351,7 +351,7 @@
 					$objNew = self::construct_fromChildObject($row);
 					if ($objNew) $arrObjects[] = $objNew ;
 				}
-				return $arrObjects;
+				if (count($arrObjects)) return $arrObjects;
 			}
 
 			/**
@@ -381,7 +381,7 @@
 					$objNew = self::construct_fromChildObject($row);
 					if ($objNew) $arrObjects[] = $objNew ;
 				}
-				return $arrObjects;
+				if (count($arrObjects)) return $arrObjects;
 			}
 
 			/**
@@ -407,7 +407,7 @@
 					$objNew = self::construct_fromChildObject($row);
 					if ($objNew) $arrObjects[] = $objNew ;
 				}
-				return $arrObjects;
+				if (count($arrObjects)) return $arrObjects;
 			}
 
 			/**
