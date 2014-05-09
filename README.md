@@ -40,14 +40,14 @@ $objExample = modelExample::fetchByID(1); # || fetchByPrimaryKey # returns model
 $arrExampleObjects = modelExample::fetchAll(); #returns array(modelExample object,modelExample object,modelExample object,...)
 ```
 
-- insert a new row in db normall
+- insert a new row in db, this will return a new modelExample object
 ```php
-$objExample::insert('My Name', 'Some Value');
+$objExample = modelExample::insert('My Name', 'Some Value');
 ```
 
 - OR insert a new row in db with an associative array
 ```php
-$objExample::insert(
+$objExample =  modelExample::insert(
 	array(
 		'strName' 			=> 'My Name', 
 		'strSomeColumNName' => 'Some Value'
