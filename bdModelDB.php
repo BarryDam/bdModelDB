@@ -3,7 +3,7 @@
 	*	bdModelDB 
 	*	@author 	Barry Dam
 	*	@copyright  BIC Multimedia 2013 - 2014
-	*	@version	1.1.3
+	*	@version	1.2.0
 	*	@uses		\LW\DB
 	*
 	*	Note:
@@ -16,11 +16,6 @@
 	*
 	*			public function getTableName(){
 	*				return 'table_name';
-	*			}
-	*
-	*			public static function insert(){
-	*				// run mysql with ur data then return
-	*				
 	*			}
 	*			
 	* 			// __construct is optional! only needed when primary key is not intID
@@ -61,6 +56,20 @@
 	*		- Update the database
 	*			$objExample->update(); # return (boolean)
 	*
+	*		- insert new db row
+	*			$objnew = ModelExample::insert('valColumn1', 'valColumn2');
+	*			// OR associative 
+	*			$objnew = ModelExample::insert(
+	*				array(
+	*					'column1' = 'valColumn1'
+	*					'column2' = 'valColumn2'
+	*				);
+	*			);
+	*			// now the row entry is made
+	*			// and the new object is returned
+	*			// your can do some like
+	*			// $objnew->column1 will return 'valColumn1'
+	* 
 	*		- getter functions
 	*			$objExample->getTableName(); #the db table name
 	*			$objExample->getConfigPrimaryKey();
@@ -72,17 +81,17 @@
 			public 	$arrModelDBdata			= array(); # ONLY contains the DB row
 
 		/* Config working data */
-			private	$arrModelDBColumns		= array(), # will be set in parseData and used in __set
+			private	$arrModelDBColumns		= array(), # will set in construct_setDbData and used in __set
 					$arrModelDBCalledFN		= array(), # array to check if a function is allready called
 					$arrModelDBSettings 	= array(
 						'strTableName'			=> false,
-						'strColumnPrimaryKey' 	=> 'intID'  #default BIC //TODO SHOW KEYS FROM tblPAG__Textbins WHERE Key_name = 'PRIMARY'
+						'strColumnPrimaryKey' 	=> 'intID' 	#default BIC //TODO SHOW KEYS FROM tblPAG__Textbins WHERE Key_name = 'PRIMARY'
 						)
 					;
 
-		/* Singletons for performance */
-			public static $arrSingletons = array(); // key = primarykey , value = object		 
-					
+		/* Singletons for performance bound to bdModelDB */
+			private static $arrSingletons = array(); // key = classname , value = array (key = id, value = object)		 
+
 		/* abstracts */
 
 			/**
@@ -90,14 +99,6 @@
 			*	make sure that this function can called static and non static
 			**/
 			abstract function getTableName();
-
-			/**
-			 * Create a new DB row!
-			 * IMPORTANT!!! Make sure to return self::fetchByPrimaryKey(INSERT_ID);
-			 * @return (object) this
-			 */
-			abstract static function insert();
-			
 
 		/* Magic methods */
 			public function __construct(){}
@@ -167,6 +168,54 @@
 
 		/* DB Functions */
 			
+			/**
+			 * Create a new DB row AND return a BDModel object!
+			 * @params should be in order of db presence
+			 * @return new childobject with the last DB entry
+			 * when the first @param is an array, the array will be interpreted as an 
+			 * associative DB array @example array('column' => 'value', 'column2' => 'value2');
+			 * @important If you want to overwrite this function in your childobject:
+			 * Make sure to return static::fetchLastInsert();
+			 */			
+			static function insert(){
+				// Get args
+				$arguments = func_get_args();
+				if (! count($arguments)) return;
+				// get table name
+				$o = new static();
+				$strTableName 	= $o->getTableName();
+				if (! $strTableName) return;
+				// get database columns
+				$arrColumns 	= \LW\DB::customQuery('SHOW COLUMNS FROM '.$strTableName);
+				if(! $arrColumns) return ;
+				// create new db entry
+				$arrNewDBentry = array();
+				// if first argument is an associative array
+				if (is_array($arguments[0])) { 
+					foreach ($arrColumns as $arrColumn) {
+						if (
+							! $arrColumn['Key'] == 'PRI' && // skip the primary key
+							array_key_exists($arrColumn['Field'], $arguments[0])
+						) {
+							$arrNewDBentry[$arrColumn['Field']] = $arguments[0][$arrColumn['Field']];
+						}
+					}
+				} else {
+					foreach ($arguments as $key => $val) {
+						$intDBKey = $key+1; // first key = allways the primary key
+						if (! array_key_exists($intDBKey, $arrColumns))
+							continue;
+						$arrNewDBentry[$arrColumns[$intDBKey]['Field']] = $val;
+					}
+				}
+				// insert in db
+				if (! count($arrNewDBentry)) return;
+				$query = \LW\DB::insert($strTableName, $arrNewDBentry);
+				// return now this object
+				if ($query) return static::fetchByPrimaryKey(\LW\DB::getInsertId());
+			}
+
+
 			/**
 			 *	Update by POST data
 			 *	@param (bool) $boolSaveDB default is TRUE
@@ -241,6 +290,7 @@
 
 			/**
 			 *	fetchByPrimaryKey, fetchByintID, fetchByID are simular
+			 *	@return new childobject
 			 */
 			final public static function fetchByPrimaryKey($getIntID = false)
 			{
@@ -254,6 +304,22 @@
 			final public static function fetchByID($getIntID) 
 			{
 				return self::fetchByPrimaryKey($getIntID);
+			}
+
+
+			/**
+			 * Returns a new child object by the last inserted db entry
+			 * @return childobject
+			 */
+			final public static function fetchLastInsert()
+			{
+				$objChildTemp		= new static();
+				$strTableName 		= $objChildTemp->getTableName();
+				$row = \LW\DB::selectOneRow(
+					$strTableName,
+					'1=1 ORDER BY '.$objChildTemp->getConfigPrimaryKey().' DESC'
+				);
+				if ($row) return self::construct_fromChildObject($row);
 			}
 
 			/**
@@ -294,8 +360,7 @@
 			final public static function fetchByColumn($getColumnName = false, $getValue = false, $getOrderBy = false, $getOrderDirection = "ASC")
 			{
 				if (! $getColumnName && ! $getValue) return false ;
-				$strCalledClassName = get_called_class();
-				$objChildTemp		= new $strCalledClassName();
+				$objChildTemp		= new static();
 				$strTableName 		= $objChildTemp->getTableName();
 				if (! $strTableName) {
 					$arrBacktrace = debug_backtrace();
@@ -325,8 +390,7 @@
 			public static function fetchByWhere($getStrWhere = false)
 			{
 				if (! $getStrWhere) return false;
-				$strCalledClassName = get_called_class();
-				$objChildTemp		= new $strCalledClassName();
+				$objChildTemp		= new static();
 				$strTableName 		= $objChildTemp->getTableName();
 				if (! $strTableName) {
 					$arrBacktrace = debug_backtrace();
@@ -378,7 +442,8 @@
 			final private function construct_byPrimaryKey($getIntID = false)
 			{
 				if (! $getIntID) return false ;
-				$strTableName = $this->getTableName();
+				$objChild 		= new static();
+				$strTableName = $objChild->getTableName();
 				if (! $strTableName) {
 					$arrBacktrace = debug_backtrace();
 					self::triggerError(
@@ -405,7 +470,9 @@
 					$this->arrModelDBdata[$key] = $val;
 				}				
 			}
+
 			private static function construct_fromChildObject($getIntOrDbRow){
+			//	$strCalledClassName = get_called_class();
 				$calledClass = get_called_class();
 				/* Check for singletons */				
 				if (
@@ -414,8 +481,8 @@
 					&& array_key_exists($getIntOrDbRow, self::$arrSingletons[$calledClass])
 				)
 					return self::$arrSingletons[$calledClass][$getIntOrDbRow];
-				/* else create a new one */	
-				$objChild 			= new static;
+				/* else create a new one */				
+				$objChild = new static;
 				try { 
 					$objChild->construct($getIntOrDbRow);
 				} catch(Exception $e) {

@@ -40,11 +40,27 @@ $objExample = modelExample::fetchByID(1); # || fetchByPrimaryKey # returns model
 $arrExampleObjects = modelExample::fetchAll(); #returns array(modelExample object,modelExample object,modelExample object,...)
 ```
 
+- insert a new row in db normall
+```php
+$objExample::insert('My Name', 'Some Value');
+```
+
+- OR insert a new row in db with an associative array
+```php
+$objExample::insert(
+	array(
+		'strName' 			=> 'My Name', 
+		'strSomeColumNName' => 'Some Value'
+	)
+);
+```
+
+
 - This is how you can get the db colum values
 ```php
 $objExample->intID 				# inside the class use $this->intID
-$objExample->strName 
-$objExample->strSomeColumnName
+$objExample->strName 			# My Name
+$objExample->strSomeColumNName  # Some Value
 ```
 
 - (re) Set the vars 
