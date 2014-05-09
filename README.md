@@ -58,7 +58,7 @@ $objExample =  modelExample::insert(
 
 - This is how you can get the db colum values
 ```php
-$objExample->intID 				# inside the class use $this->intID
+$objExample->intID 				// inside the class use $this->intID
 $objExample->strName 			# My Name
 $objExample->strSomeColumNName  # Some Value
 ```
@@ -85,6 +85,6 @@ $objExample->delete(); # return (boolean) on success
 
 - getter functions
 ```php
-$objExample->getTableName(); #the db table name
-$objExample->getConfigPrimaryKey();
+$objExample->getTableName(); # table_name
+$objExample->getConfigPrimaryKey(); # intID
 ```
