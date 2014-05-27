@@ -306,6 +306,19 @@
 				return self::fetchByPrimaryKey($getIntID);
 			}
 
+			/**
+			 * @return childobject first in db
+			 */
+			final public static function fetchFirst()
+			{
+				$objChildTemp		= new static();
+				$strTableName 		= $objChildTemp->getTableName();
+				$row 				= \LW\DB::selectOneRow(
+					$strTableName,
+					'1=1 ORDER BY '.$objChildTemp->getConfigPrimaryKey().' ASC'
+				);
+				if ($row) return self::construct_fromChildObject($row);
+			}
 
 			/**
 			 * Returns a new child object by the last inserted db entry
@@ -315,7 +328,7 @@
 			{
 				$objChildTemp		= new static();
 				$strTableName 		= $objChildTemp->getTableName();
-				$row = \LW\DB::selectOneRow(
+				$row 				= \LW\DB::selectOneRow(
 					$strTableName,
 					'1=1 ORDER BY '.$objChildTemp->getConfigPrimaryKey().' DESC'
 				);
