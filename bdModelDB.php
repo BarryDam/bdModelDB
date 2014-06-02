@@ -194,7 +194,7 @@
 				if (is_array($arguments[0])) { 
 					foreach ($arrColumns as $arrColumn) {
 						if (
-							! $arrColumn['Key'] == 'PRI' && // skip the primary key
+							$arrColumn['Key'] !== 'PRI' && // skip the primary key
 							array_key_exists($arrColumn['Field'], $arguments[0])
 						) {
 							$arrNewDBentry[$arrColumn['Field']] = $arguments[0][$arrColumn['Field']];
