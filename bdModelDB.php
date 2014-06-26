@@ -175,7 +175,7 @@
 			 * when the first @param is an array, the array will be interpreted as an 
 			 * associative DB array @example array('column' => 'value', 'column2' => 'value2');
 			 * @important If you want to overwrite this function in your childobject:
-			 * Make sure to return static::fetchLastInsert();
+			 * Make sure to return static::fetchLast();
 			 */			
 			static function insert(){
 				// Get args
@@ -308,29 +308,33 @@
 
 			/**
 			 * @return childobject first in db
+			 * @param $getOrderByColumn the column to order.. when false.. the primarykey will be used
 			 */
-			final public static function fetchFirst()
+			final public static function fetchFirst($getOrderByColumn = false)
 			{
 				$objChildTemp		= new static();
 				$strTableName 		= $objChildTemp->getTableName();
+				$strColumn			= ($getOrderByColumn) ? $getOrderByColumn : $objChildTemp->getConfigPrimaryKey();
 				$row 				= \LW\DB::selectOneRow(
 					$strTableName,
-					'1=1 ORDER BY '.$objChildTemp->getConfigPrimaryKey().' ASC'
+					'1=1 ORDER BY '.$strColumn.' ASC'
 				);
 				if ($row) return self::construct_fromChildObject($row);
 			}
 
 			/**
 			 * Returns a new child object by the last inserted db entry
+			 * duplicate func of fetchLast .. keep this for backwardcompatibi
 			 * @return childobject
 			 */
-			final public static function fetchLastInsert()
+			final public static function fetchLast($getOrderByColumn = false) 
 			{
 				$objChildTemp		= new static();
 				$strTableName 		= $objChildTemp->getTableName();
+				$strColumn			= ($getOrderByColumn) ? $getOrderByColumn : $objChildTemp->getConfigPrimaryKey();
 				$row 				= \LW\DB::selectOneRow(
 					$strTableName,
-					'1=1 ORDER BY '.$objChildTemp->getConfigPrimaryKey().' DESC'
+					'1=1 ORDER BY '.$strColumn.' DESC'
 				);
 				if ($row) return self::construct_fromChildObject($row);
 			}
