@@ -91,6 +91,12 @@
 
 		/* Singletons for performance bound to bdModelDB */
 			private static $arrSingletons = array(); // key = classname , value = array (key = id, value = object)		 
+			// for debug purposes > prints all singletons
+			public static function printSingletons()
+			{
+				echo 'bdModelDB.php Line 97:<br /><pre>'.print_r(self::$arrSingletons,true).'</pre>';
+			}
+
 
 		/* abstracts */
 
@@ -488,25 +494,38 @@
 				}				
 			}
 
+			/**
+			 * get exsisting object from cache or create a new object // and store it in cache
+			 */
 			private static function construct_fromChildObject($getIntOrDbRow){
 			//	$strCalledClassName = get_called_class();
-				$calledClass = get_called_class();
+				$calledClass 	= get_called_class();
+				$objChild 		= new static;
 				/* Check for singletons */				
 				if (
 					is_numeric($getIntOrDbRow) 
 					&& array_key_exists($calledClass, self::$arrSingletons)
 					&& array_key_exists($getIntOrDbRow, self::$arrSingletons[$calledClass])
-				)
+				) {
 					return self::$arrSingletons[$calledClass][$getIntOrDbRow];
+				} elseif (
+					is_array($getIntOrDbRow)
+					&& array_key_exists($calledClass, self::$arrSingletons)
+					&& array_key_exists($objChild->getConfigPrimaryKey(), self::$arrSingletons[$calledClass])
+				) {
+					return self::$arrSingletons[$calledClass][$getIntOrDbRow];
+				}
 				/* else create a new one */				
-				$objChild = new static;
+				
 				try { 
 					$objChild->construct($getIntOrDbRow);
 				} catch(Exception $e) {
 					$objChild = null;
 				}
 				/* add to singletons */
-				if (is_numeric($getIntOrDbRow)) self::$arrSingletons[$calledClass][$getIntOrDbRow] = $objChild;
+				$strPrimaryKey = $objChild->getConfigPrimaryKey();
+				self::$arrSingletons[$calledClass][$objChild->$strPrimaryKey] = $objChild;
+				//if (is_numeric($getIntOrDbRow)) self::$arrSingletons[$calledClass][$getIntOrDbRow] = $objChild;
 				return $objChild;
 			}
 
