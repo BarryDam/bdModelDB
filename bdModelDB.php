@@ -3,7 +3,7 @@
 	*	bdModelDB 
 	*	@author 	Barry Dam
 	*	@copyright  BIC Multimedia 2013 - 2014
-	*	@version	1.2.0
+	*	@version	1.2.1
 	*	@uses		\LW\DB
 	*
 	*	Note:
@@ -97,6 +97,26 @@
 				echo 'bdModelDB.php Line 97:<br /><pre>'.print_r(self::$arrSingletons,true).'</pre>';
 			}
 
+		/**
+		 * toSting for debugging!
+		 */
+		public function __toString()
+		{
+			// get the file + linenr
+			$strFileLine	= '';
+			$arrDebug		= debug_backtrace();
+			foreach($arrDebug as $arr)  {
+				if ($arr['function'] == '__toString') {
+					$strFileLine = ' - '.$arr['file'].' line '.$arr['line']; 
+					break;
+				}
+			}
+			return '
+				<div style="margin:10px;padding:10px;border:solid 5px blue;background-color:#FFF">
+					'.get_class($this).$strFileLine.'<pre>'.print_r($this->arrModelDBdata, true).'</pre>'.'
+				</div>
+			';
+		}
 
 		/* abstracts */
 
