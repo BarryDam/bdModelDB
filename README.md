@@ -10,14 +10,11 @@ class modelExample extends bdModelDB {
 		public function getTableName(){
 			return 'table_name';
 		}
-		public static function insert(){
-			// run mysql with ur data then return
-			// then return a self::fetchByPrimaryKey(MYSQL_INSERT_ID);
-		}
-	
 		
 	public function __set($getName,$getVal){
-		if($getName=="something") $dosome;
+		if($getName=="something") {
+			// need to do some?		
+		}
 		parent::__set($getName,$getVal);
 	}
 	
