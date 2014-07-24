@@ -3,7 +3,7 @@
 	*	bdModelDB 
 	*	@author 	Barry Dam
 	*	@copyright  BIC Multimedia 2013 - 2014
-	*	@version	1.2.1
+	*	@version	1.3.0
 	*	@uses		\LW\DB
 	*
 	*	Note:
@@ -111,9 +111,14 @@
 					break;
 				}
 			}
+			// parse the arrModelDBdata trough __get();
+			$arrData = array();
+			foreach($this->arrModelDBdata as $key => $val)
+				$arrData[$key] = $this->$key;
+			// return
 			return '
 				<div style="margin:10px;padding:10px;border:solid 5px blue;background-color:#FFF">
-					'.get_class($this).$strFileLine.'<pre>'.print_r($this->arrModelDBdata, true).'</pre>'.'
+					'.get_class($this).$strFileLine.'<pre>'.print_r($arrData, true).'</pre>'.'
 				</div>
 			';
 		}
@@ -129,12 +134,9 @@
 		/* Magic methods */
 			public function __construct(){}
 
-			/**
-			 *	@param (string) $getName can only be a column name! 
-			 *  the primary key can not be set
-			 */
 			public function __set($getName, $getValue)
 			{
+				// check valid column
 				if (! in_array($getName, $this->arrModelDBColumns)) {
 					$arrBacktrace = debug_backtrace();
 					self::triggerError(
@@ -142,6 +144,7 @@
 					);
 					return false;
 				}
+				// check if it's not the primary key
 				if ($getName === $this->arrModelDBSettings['strColumnPrimaryKey']) {
 					$arrBacktrace = debug_backtrace();
 					self::triggerError(
@@ -149,18 +152,37 @@
 					);
 					return false;
 				}
+				// json encode when it is an array
+				if (is_array($getValue)) 
+					$getValue = json_encode($getValue);
+				// add to arrmodelDBdata
 				$this->arrModelDBdata[$getName] = $getValue ;
 			}
 
 			public function __get($getName)
 			{
-				if (array_key_exists($getName, $this->arrModelDBdata)) 
-					return $this->arrModelDBdata[$getName];
+				// check valid column
+				if (! array_key_exists($getName, $this->arrModelDBdata)) 
+					return false;
+				$return = $this->arrModelDBdata[$getName];
+				// check if it is json encoded
+				if (is_string($return)) {
+					$arrFromJson = json_decode($return, true);
+					if (is_array($arrFromJson)) 
+						$return = $arrFromJson;
+				}
+				// return value
+				return $return;
 			}
 
 			public function __isset($getName)
 			{
-				return isset($this->arrModelDBdata[$getName]);
+				return ($this->$getName) ? true : false;							
+			}
+
+			public function __unset($getName)
+			{
+				$this->arrModelDBdata[$getName] = false;
 			}
 
 		/* Config setters */
@@ -231,7 +253,7 @@
 						$intDBKey = $key+1; // first key = allways the primary key
 						if (! array_key_exists($intDBKey, $arrColumns))
 							continue;
-						$arrNewDBentry[$arrColumns[$intDBKey]['Field']] = $val;
+						$arrNewDBentry[$arrColumns[$intDBKey]['Field']] = (is_array($val)) ? json_encode($val) :  $val ;
 					}
 				}
 				// insert in db

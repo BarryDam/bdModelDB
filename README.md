@@ -1,6 +1,6 @@
 # bdModelDB #
 
-*Note: bdModelDB uses \LW\DB which is an mysql db framework.*
+*Note: bdModelDB uses \LW\DB which is an mysql db framework. (https://github.com/loekwetzels) *
 
 
 ##Extending this class##
@@ -87,4 +87,20 @@ $objExample->delete(); # return (boolean) on success
 ```php
 $objExample->getTableName(); # table_name
 $objExample->getConfigPrimaryKey(); # intID
+```
+
+
+- AUTO store arrays as encoded json in db
+```php
+# for example you have a db column called 'options' with datatype TEXT 
+# when you do something like this
+$objExample->options = array('a'=> 'Banana', 'b' => 'Apple');
+objExample->update();
+
+# then the value of DB colum options will be json_encoded like this:
+# {"a":"Banana","b":"Apple"}
+# when you call
+$objExample->options 
+# this value will be json_decoded again
+
 ```
