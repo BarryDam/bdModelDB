@@ -309,6 +309,13 @@
 			 */
 			public function delete()
 			{
+				// first delete from singletons
+				$calledClass 	= get_called_class();
+				$objChild 		= new static;
+				if (isset(self::$arrSingletons[$calledClass][$this->getConfigPrimaryKey()])) 
+					unset(self::$arrSingletons[$calledClass][$this->getConfigPrimaryKey()]);
+
+				// then delete from db
 				return  \LW\DB::delete(
 					$this->getTableName(),
 					$this->getConfigPrimaryKey().' = ?',
