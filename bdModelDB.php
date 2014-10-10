@@ -3,7 +3,7 @@
 	 *	bdModelDB
  	 *	@author 	Barry Dam
  	 *	@copyright  BIC Multimedia 2013 - 2014
- 	 *	@version	2.0
+ 	 *	@version	2.0.1
  	 *	@uses		\LW\DB
  	 *
 	 *	Note:
@@ -302,7 +302,9 @@
 						$arrColumn['Key'] !== 'PRI' && // skip the primary key
 						array_key_exists($arrColumn['Field'], $arguments[0])
 					) {
-						$arrNewDBentry[$arrColumn['Field']] = $arguments[0][$arrColumn['Field']];
+						$arrNewDBentry[$arrColumn['Field']] = (is_array($arguments[0][$arrColumn['Field']])) 
+							? json_encode($arguments[0][$arrColumn['Field']]) 
+							: $arguments[0][$arrColumn['Field']] ;
 					}
 				}
 			} else {
@@ -329,7 +331,7 @@
 		 *	fetchByPrimaryKey, fetchByID are simular
 		 *	@return new object
 		 */
-		final public static function fetchByPrimaryKey($getIntID = false)
+		public static function fetchByPrimaryKey($getIntID = false)
 		{
 			try {
 				return new static($getIntID);
@@ -337,7 +339,7 @@
 				// do nothing
 			}
 		}
-		final public static function fetchByID($getIntID = false)
+		public static function fetchByID($getIntID = false)
 		{
 			return static::fetchByPrimaryKey($getIntID);
 		}
@@ -346,7 +348,7 @@
 		 * @return childobject first in db
 		 * @param $getOrderByColumn the column to order.. when false.. the primarykey will be used
 		 */
-		final public static function fetchFirst($getOrderByColumn = false)
+		public static function fetchFirst($getOrderByColumn = false)
 		{
 			$strColumn	= ($getOrderByColumn) ? $getOrderByColumn : static::$strPrimaryKey;
 			$row 		= \LW\DB::selectOneRow(
@@ -361,7 +363,7 @@
 		 * duplicate func of fetchLast .. keep this for backwardcompatibi
 		 * @return childobject
 		 */
-		final public static function fetchLast($getOrderByColumn = false)
+		public static function fetchLast($getOrderByColumn = false)
 		{
 			$strColumn  = ($getOrderByColumn) ? $getOrderByColumn : static::$strPrimaryKey;
 			$row 		= \LW\DB::selectOneRow(
@@ -376,7 +378,7 @@
 		 * @param  string  $getOrderDirection  Only used when $getOrderByColumn is set.
 		 * @return [type]  array               array with bdModelDB childobjects
 		 */
-		final public static function fetchAll($getOrderByColumn = false, $getOrderDirection = "ASC")
+		public static function fetchAll($getOrderByColumn = false, $getOrderDirection = "ASC")
 		{
 			$rows = ($getOrderByColumn) 
 				? \LW\DB::select(static::getTable(), '*', '1=1 ORDER BY '.$getOrderByColumn.' '.$getOrderDirection)
@@ -387,7 +389,7 @@
 		/**
 		 *	@param (string) $getColumnName
 		 */
-		final public static function fetchByColumn($getColumnName = false, $getValue = false, $getOrderBy = false, $getOrderDirection = "ASC")
+		public static function fetchByColumn($getColumnName = false, $getValue = false, $getOrderBy = false, $getOrderDirection = "ASC")
 		{
 			if (! $getColumnName && ! $getValue) 
 				return false ;
@@ -400,7 +402,7 @@
 		/**
 		*	@param (string) mysql WHERE # voorbeeld = 'test' AND id="1"
 		**/
-		final public static function fetchByWhere($getStrWhere = false)
+		public static function fetchByWhere($getStrWhere = false)
 		{
 			if (! $getStrWhere) 
 				return false;
@@ -417,9 +419,13 @@
 				return;
 			$arrObjects	= array();
 			foreach ($getDBRows as $row) {
-				$objNew = new static($row);
-				if ($objNew) 
-					$arrObjects[] = $objNew ;
+				try {
+					$objNew = new static($row);
+					if ($objNew) 
+						$arrObjects[] = $objNew ;
+				} catch (Exception $e) {
+					// do nothing
+				}				
 			}
 			if (count($arrObjects)) 
 				return $arrObjects;
