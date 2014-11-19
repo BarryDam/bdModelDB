@@ -430,5 +430,57 @@
 			if (count($arrObjects)) 
 				return $arrObjects;
 		}
+
+		/**
+		 * 
+		 * @return array An array of values by provided $property
+		 * @param array $objects An array of objects to extract the values from
+		 * @param string $property The methodname or key for the value to extract
+		 * @param array $method_arguments Optional arguments to pass to the method if $property is a method
+		 */
+		public static function extractValues($objects, $property, $method_arguments = array())
+		{
+			// check if $objects is a filled array
+			if( !is_array($objects) || !count($objects) )
+				return false;
+
+			// if property is a method ...
+			$r = new ReflectionClass( get_class($objects[0]) );
+			if($r->hasMethod($property))
+			{
+				// some methods are forbidden (the methods in bdModelDB), so disallow access to those
+				$r = new ReflectionClass('bdModelDB');
+				$forbidden_methods = array_map(function($method){
+					return $method->name;
+				}, $r->getMethods());
+
+				if( in_array($property, $forbidden_methods) )
+					return false;
+
+				// the optional arguments to pass to the method on the object
+				$method_arguments = array_slice(func_get_args(), 2);
+				$callback_arguments = array('property'=>$property, 'args'=> $method_arguments);
+				$callback = function($object) use ($callback_arguments) {
+					return call_user_func_array( array($object, $callback_arguments['property']), $callback_arguments['args']);
+				};
+
+				// call the method on the objects
+				$return_values = array_map($callback, $objects);
+				return $return_values;
+			}
+
+			// if property is not a method (but a key for a mixed value) ...
+			// check if property is valid
+			$arrDBData = (array) $objects[0]->getDBRowObject();
+			if (! array_key_exists($property, $arrDBData))
+				return false;
+			
+			// get return values
+			$return_values = array();
+			foreach($objects as $object)
+				$return_values[] = $object->$property;
+
+			return $return_values;
+		}
 	}
 ?>
