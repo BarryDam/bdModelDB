@@ -370,7 +370,10 @@
 				static::getTable(),
 				'1=1 ORDER BY '.$strColumn.' DESC'
 			);
-			if ($row) return new static($row);
+			if (! $row) 
+				return array();
+			//
+			return new static($row);
 		}
 
 		/**
@@ -392,7 +395,7 @@
 		public static function fetchByColumn($getColumnName = false, $getValue = false, $getOrderBy = false, $getOrderDirection = "ASC")
 		{
 			if (! $getColumnName && ! $getValue) 
-				return false ;
+				throw new Exception('Check your passed params', 1);;
 			$rows = ($getOrderBy) 
 			 	? \LW\DB::select(static::getTable(),'*',$getColumnName.' = ? ORDER BY '.$getOrderBy.' '.$getOrderDirection.'',$getValue)
 			 	: \LW\DB::select(static::getTable(),'*',$getColumnName.' = ?',$getValue);			
@@ -405,7 +408,7 @@
 		public static function fetchByWhere($getStrWhere = false)
 		{
 			if (! $getStrWhere) 
-				return false;
+				throw new Exception('First param not set', 1);
 			$rows = \LW\DB::customQuery('SELECT * FROM '.static::getTable().' WHERE '.$getStrWhere);
 			return static::getArrObjectsByDbRows($rows);			
 		}
@@ -442,7 +445,6 @@
 						$arrFields[] = $v;
 				}
 			}
-
 			// Convert the $getStrSearch string to array words
 			$arrQueryWords = array_unique(preg_split('/[\ \n\,]+/', $getStrSearch));
 
@@ -511,9 +513,12 @@
 		 */
 		final public static function extractValues($objects, $property, $method_arguments = array())
 		{
-			// check if $objects is a filled array
-			if( !is_array($objects) || !count($objects) )
-				return false;
+			// check if $objects is an array
+			if( !is_array($objects) )
+				throw new Exception('first parameter is not an array');
+
+			if(empty($objects))
+				return array();
 
 			$objFirst = array_slice($objects, 0,1);
 			$objFirst = $objFirst[0];
@@ -529,7 +534,7 @@
 				}, $r->getMethods());
 
 				if( in_array($property, $forbidden_methods) )
-					return false;
+					throw new Exception('forbidden property');
 
 				// the optional arguments to pass to the method on the object
 				$method_arguments = array_slice(func_get_args(), 2);
@@ -547,7 +552,7 @@
 			// check if property is valid
 			$arrDBData = (array) $objFirst->getDBRowObject();
 			if (! array_key_exists($property, $arrDBData))
-				return false;
+				throw new Exception('property does not excist');
 			
 			// get return values
 			$return_values = array();
