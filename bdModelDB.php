@@ -93,6 +93,10 @@
 		 */
 		public function __toString()
 		{
+			$class	= get_called_class();
+			return $class. ' '.$this->getId();
+			/*
+			OLD:
 			// get the file + linenr
 			$strFileLine	= '';
 			$arrDebug		= debug_backtrace();
@@ -117,6 +121,7 @@
 					<pre>'.print_r($this,true).'</pre>
 				</div>
 			';
+			*/
 		}
 
 		public function __set($getKey, $getValue)
@@ -490,7 +495,7 @@
 		final protected static function getArrObjectsByDbRows($getDBRows = array()) 
 		{
 			if (! is_array($getDBRows) || ! count($getDBRows))
-				return;
+				return array();
 			$arrObjects	= array();
 			foreach ($getDBRows as $row) {
 				try {
@@ -503,6 +508,8 @@
 			}
 			if (count($arrObjects)) 
 				return $arrObjects;
+			else
+				return array();
 		}
 
 		/**
@@ -552,7 +559,7 @@
 			// check if property is valid
 			$arrDBData = (array) $objFirst->getDBRowObject();
 			if (! array_key_exists($property, $arrDBData))
-				throw new Exception('property does not excist');
+				throw new Exception('property "'.$property.'" does not exists');
 			
 			// get return values
 			$return_values = array();
