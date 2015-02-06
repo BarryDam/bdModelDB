@@ -88,13 +88,18 @@
 			}
 		}
 		
+		public function getID()
+		{
+			return $this->__get(static::$strPrimaryKey);
+		}
+		
 		/**
 		 * toSting for debugging!
 		 */
 		public function __toString()
 		{
 			$class	= get_called_class();
-			return $class. ' '.$this->getId();
+			return $class. ' '.$this->getID();
 			/*
 			OLD:
 			// get the file + linenr
@@ -264,7 +269,7 @@
 		public function duplicate()
 		{
 			// create the new db array
-			$arrNewDBEntry[$strColumn] = (array) $this->getDBRowObject();
+			$arrNewDBEntr = (array) $this->getDBRowObject();
 			unset($arrNewDBEntry[static::$strPrimaryKey]);
 			// insert in db
 			if (! count($arrNewDBEntry)) 
@@ -515,8 +520,19 @@
 		/**
 		 * @return array An array of values by provided $property
 		 * @param array $objects An array of objects to extract the values from
-		 * @param string $property The methodname or key for the value to extract
+		 * @param 
+		 * 		string $property The methodname or key for the value to extract
+		 * 		array  $property will return array with multiple values
 		 * @param array $method_arguments Optional arguments to pass to the method if $property is a method
+		 * @example 
+		 * $a =	object::extractValues($objects, 'example')
+		 * $a is array('value1', 'value2', ...);
+		 * $b = object::extractValues($objects, array('title' => 'getTitle', 'message'))
+		 * $b is array(
+		 * 	array('title'=>'Example title', 'message' => 'message one' ),
+		 * 	array('title'=>'Example title', 'message' => 'message one' ),
+		 * 	...
+		 * )
 		 */
 		final public static function extractValues($objects, $property, $method_arguments = array())
 		{
@@ -526,6 +542,34 @@
 
 			if(empty($objects))
 				return array();
+
+			// Multiple properties ($property = array)
+			if (is_array($property))
+			{
+				if (! count($property))
+					throw new Exception('second param array is empty');
+
+				$arrMultiple = array();
+				$count  = 0;
+				foreach ($property as $kProperty => $vProperty) {
+					// set the correct method args
+					$method_argument = (is_array($method_arguments) && isset($method_arguments[$count]))
+						? $method_arguments[$count]
+						: $method_arguments ;
+					// if property key is numeric
+					if (is_numeric($kProperty))
+						$kProperty = $vProperty;
+					$arrMultiple[$kProperty] = self::extractValues($objects, $vProperty, $method_argument);
+					$count++;
+				}
+				// create the final array
+				$arrReturn = array();
+				foreach ($arrMultiple as $key => $arrValues)
+					foreach ($arrValues as $k => $v)
+						$arrReturn[$k][$key] = $v;
+				return $arrReturn;
+
+			}
 
 			$objFirst = array_slice($objects, 0,1);
 			$objFirst = $objFirst[0];
@@ -539,10 +583,13 @@
 				$forbidden_methods = array_map(function($method){
 					return $method->name;
 				}, $r->getMethods());
-
+				// get ID is allowed
+				if(($keyAllowed = array_search('getID', $forbidden_methods)) !== false)
+				    unset($forbidden_methods[$keyAllowed]);
+				// check for forbidden properties
 				if( in_array($property, $forbidden_methods) )
-					throw new Exception('forbidden property');
-
+					throw new Exception('forbidden property '.$property);
+				
 				// the optional arguments to pass to the method on the object
 				$method_arguments = array_slice(func_get_args(), 2);
 				$callback_arguments = array('property'=>$property, 'args'=> $method_arguments);
